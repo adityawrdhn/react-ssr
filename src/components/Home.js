@@ -1,37 +1,42 @@
-import React from "react";
-import { connect } from "react-redux";
-import { fetchData } from "../store";
+import React, { Fragment } from 'react'
+import { connect } from 'react-redux'
+import { initializeSession, fetchData } from '../store'
+import { TitleWrapper, ListWrapper, ItemWrapper } from './Home.Styled'
 
 class Home extends React.Component {
-    componentDidMount( ) {
-        if ( this.props.circuits.length <= 0 ) {
-            this.props.fetchData( );
-        }
+    static defaultProps = { bar: 'indah' }
+    componentDidMount() {
+        this.props.fetchData(2000)
     }
 
-    render( ) {
-        const { circuits } = this.props;
-
+    render() {
+        const { circuits } = this.props
         return (
-            <div className="wrapper">
-                <h2>F1 2018 Season Calendar</h2>
-                <ul>
-                    { circuits.map( ( { circuitId, circuitName, Location } ) => (
-                        <li key={ circuitId } >{ circuitName } - { Location.locality }, { Location.country }</li>
-                    ) ) }
-                </ul>
-            </div>
-        );
+            <Fragment>
+                <TitleWrapper>F1 2000 Season Calendar {circuits.length}</TitleWrapper>
+                <ListWrapper>
+                    {circuits.map(({ circuitId, circuitName, Location }) => (
+                        <ItemWrapper key={circuitId}>
+                            {circuitName} - {Location.locality}, {Location.country}
+                        </ItemWrapper>
+                    ))}
+                </ListWrapper>
+            </Fragment>
+        )
     }
 }
-Home.serverFetch = fetchData; // static declaration of data requirements
-
-const mapStateToProps = ( state ) => ( {
-    circuits: state.data,
-} );
+// const newFetchData = () => {
+//     return fetchData(2018)
+// }
+Home.getInitialProps = () => fetchData(2000)
+const mapStateToProps = ({ circuits, ...props }) => ({
+    circuits,
+    ...props,
+})
 
 const mapDispatchToProps = {
+    initializeSession,
     fetchData,
-};
+}
 
-export default connect( mapStateToProps, mapDispatchToProps )( Home );
+export default connect(mapStateToProps, mapDispatchToProps)(Home)

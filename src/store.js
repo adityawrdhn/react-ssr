@@ -1,39 +1,63 @@
-import { createStore, combineReducers, applyMiddleware } from "redux";
-import thunkMiddleware from "redux-thunk";
-import { fetchCircuits } from "./api";
+import { createStore, combineReducers, applyMiddleware } from 'redux'
+import thunkMiddleware from 'redux-thunk'
+import { fetchCircuits } from './api'
+import { createLogger } from 'redux-logger'
 
-export const initializeSession = ( ) => ( {
-    type: "INITIALIZE_SESSION",
-} );
+const loggerMiddleware = createLogger()
+export const initializeSession = () => ({
+    type: 'INITIALIZE_SESSION',
+})
 
-const storeData = ( data ) => ( {
-    type: "STORE_DATA",
+const storeData = (data) => ({
+    type: 'STORE_DATA',
     data,
-} );
+})
 
-export const fetchData = ( ) => ( dispatch ) =>
-    fetchCircuits( ).then( res => dispatch( storeData( res ) ) );
+export const fetchData = (year) => (dispatch) =>
+    fetchCircuits(year).then((res) => dispatch(storeData(res)))
 
-const sessionReducer = ( state = false, action ) => {
-    switch ( action.type ) {
-        case "INITIALIZE_SESSION":
-            return true;
-        default: return state;
+const loggedIn = (state = false, action) => {
+    switch (action.type) {
+        case 'INITIALIZE_SESSION':
+            return true
+        default:
+            return state
     }
-};
-
-const dataReducer = ( state = [ ], action ) => {
-    switch ( action.type ) {
-        case "STORE_DATA":
-            return action.data;
-        default: return state;
+}
+export const setLang = (payload) => ({ type: 'SET_LANGUAGE', payload })
+const language = (state = 'id', action) => {
+    switch (action.type) {
+        case 'SET_LANGUAGE':
+            return action.payload
+        default:
+            return state
     }
-};
+}
 
-const reducer = combineReducers( {
-    loggedIn: sessionReducer,
-    data: dataReducer,
-} );
+const circuits = (state = [], action) => {
+    switch (action.type) {
+        case 'STORE_DATA':
+            return action.data
+        default:
+            return state
+    }
+}
 
-export default ( initialState ) =>
-    createStore( reducer, initialState, applyMiddleware( thunkMiddleware ) );
+const initialProps = (state = {}, action) => {
+    switch (action.type) {
+        case 'ASYNC_DATA':
+            return action.payload
+        default:
+            return state
+    }
+}
+
+const reducer = combineReducers({
+    initialProps,
+    language,
+    loggedIn,
+    circuits,
+})
+
+export default (initialState) =>
+    createStore(reducer, initialState, applyMiddleware(thunkMiddleware))

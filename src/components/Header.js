@@ -2,13 +2,16 @@ import React from 'react'
 import { Link } from 'react-router-dom'
 import { connect } from 'react-redux'
 import { useTranslation } from 'react-i18next'
-
-const Header = ({ loggedIn }) => {
-    const { t, i18n } = useTranslation(['translation'])
+import { setLang } from '../store'
+const Header = ({ loggedIn, setLang }) => {
+    const { t } = useTranslation()
+    const hanldeChangelang = (code) => {
+        setLang(code)
+    }
     return (
         <div>
             <Link to="/" className="link">
-                Home
+                {t('babih')}
             </Link>
             <Link to="/about" className="link">
                 {t('nav_menu.about_us')}
@@ -21,11 +24,14 @@ const Header = ({ loggedIn }) => {
                     Secret
                 </Link>
             )}
+            <button onClick={() => hanldeChangelang('id')}>id</button>
+            <button onClick={() => hanldeChangelang('en')}>en</button>
         </div>
     )
 }
-const mapStateToProps = state => ({
+const mapStateToProps = (state) => ({
     loggedIn: state.loggedIn,
 })
+const mapDispatchToProps = { setLang }
 
-export default connect(mapStateToProps)(Header)
+export default connect(mapStateToProps, mapDispatchToProps)(Header)

@@ -15,6 +15,11 @@ export default [
         exact: true,
     },
     {
+        path: "/about/:id",
+        component: About,
+        exact: true,
+    },
+    {
         path: "/contact",
         component: Contact,
         exact: true,

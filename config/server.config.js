@@ -5,16 +5,25 @@ const FriendlyErrorsWebpackPlugin = require('friendly-errors-webpack-plugin')
 const WriteFilePlugin = require('write-file-webpack-plugin')
 const MiniCssExtractPlugin = require('mini-css-extract-plugin')
 const autoprefixer = require('autoprefixer')
-console.log('Build Environment', dev ? 'Development' : 'Production')
+const webpack = require('webpack')
+const nodeExternals = require('webpack-node-externals')
+const paths = require('./paths')
 
 const plugins = [
     new FriendlyErrorsWebpackPlugin(),
     new MiniCssExtractPlugin({
-        filename: dev ? '[name].style.css' : '[name].style.css',
-        chunkFilename: dev ? '[id].chunk.css' : '[id].chunk.css',
+        filename: dev ? '[name].css' : '[name].[contenthash].css',
+        chunkFilename: dev ? '[id].css' : '[id].[contenthash].css',
     }),
-    new WriteFilePlugin(),
+    new webpack.DefinePlugin({
+        __SERVER__: 'true',
+        __CLIENT__: 'false',
+    }),
 ]
+if (dev) {
+    plugins.push(new webpack.HotModuleReplacementPlugin())
+    plugins.push(new WriteFilePlugin())
+}
 
 if (!dev) {
     plugins.push(
@@ -27,14 +36,24 @@ if (!dev) {
 }
 
 module.exports = {
+    name: 'server',
+    target: 'node',
     mode: dev ? 'development' : 'production',
-    context: path.join(__dirname, 'src'),
-    devtool: dev ? 'none' : 'source-map',
     entry: {
-        app: './client.js',
+        server: ['@babel/polyfill', path.resolve(__dirname, '../src/server/index.js')],
     },
+    externals: [
+        nodeExternals({
+            whitelist: /\.(sa|sc|c)ss$/,
+        }),
+    ],
     resolve: {
-        modules: [path.resolve('./src'), 'node_modules'],
+        extensions: ['.js', '.mjs', '.json', '.jsx', '.css'],
+        modules: paths.resolveModules,
+        alias: {
+            components: path.join(paths.src, 'components'),
+            assets: path.join(paths.src, 'assets'),
+        },
     },
     module: {
         rules: [
@@ -45,13 +64,31 @@ module.exports = {
             },
             {
                 test: /\.(sa|sc|c)ss$/,
+                exclude: /node_modules/,
                 use: [
                     {
                         loader: 'style-loader',
+                        options: { injectType: 'singletonStyleTag' },
                     },
                     {
                         loader: MiniCssExtractPlugin.loader,
                     },
+                    {
+                        loader: 'css-loader',
+                    },
+                    {
+                        loader: 'postcss-loader',
+                        options: {
+                            plugins: [autoprefixer()],
+                        },
+                    },
+                    'sass-loader',
+                ],
+            },
+            {
+                test: /\.(sa|sc|c)ss$/,
+                include: /node_modules/,
+                use: [
                     {
                         loader: 'css-loader',
                     },
@@ -70,9 +107,9 @@ module.exports = {
                     {
                         loader: 'file-loader',
                         options: {
-                            name: '[name].[ext]',
-                            outputPath: url => {
-                                return `assets/${url}`
+                            name: '[name].[hash:8].[ext]',
+                            outputPath: (url) => {
+                                return `/media/${url}`
                             },
                         },
                     },
@@ -81,8 +118,12 @@ module.exports = {
         ],
     },
     output: {
-        path: path.resolve(__dirname, 'dist'),
-        filename: '[name].chunk.js',
+        path: paths.build,
+        filename: '[name].js',
+        chunkFilename: '[name].[chunkhash:8].chunk.js',
     },
     plugins,
+    stats: {
+        colors: true,
+    },
 }
